@@ -3,8 +3,9 @@ import Head from 'next/head'
 import styles from '../styles/Home.module.scss'
 
 export default function Home() {
-  const [imageSrc, setImageSrc] = useState();
+  const [imageSrc, setImageSrc] = useState([]);
   const [uploadData, setUploadData] = useState();
+  const imageArray = []
 
   /**
    * handleOnChange
@@ -27,28 +28,38 @@ export default function Home() {
    * @description Triggers when the main form is submitted
    */
 
+  
   async function handleOnSubmit(event) {
     event.preventDefault();
-
+  
     const form = event.currentTarget;
     const fileInput = Array.from(form.elements).find(({ name }) => name === 'file');
-
+  
     const formData = new FormData();
-
-    for ( const file of fileInput.files ) {
+    formData.append('upload_preset', 'c7zop8gs');
+    const cloudinaryName = process.env.CLOUDINARY_NAME;
+  
+    for (const file of fileInput.files) {
       formData.append('file', file);
+
+      const data = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryName}/image/upload`, {
+            method: 'POST',
+            body: formData,
+          }).then((r) => r.json());
+      imageArray.push(data.secure_url)
     }
+  
+   
+  
+   
+  
+    setImageSrc(imageArray);
+    setUploadData(imageArray);
 
-    formData.append('upload_preset', 'my-uploads');
-
-    const data = await fetch('https://api.cloudinary.com/v1_1/[Your Cloudinary Cloud Name]/image/upload', {
-      method: 'POST',
-      body: formData
-    }).then(r => r.json());
-
-    setImageSrc(data.secure_url);
-    setUploadData(data);
   }
+  
+
+
 
   return (
     <div className={styles.container}>
@@ -69,14 +80,14 @@ export default function Home() {
 
         <form className={styles.form} method="post" onChange={handleOnChange} onSubmit={handleOnSubmit}>
           <p>
-            <input type="file" name="file" />
+            <input type="file" name="file"  multiple/>
           </p>
           
           <img src={imageSrc} />
           
           {imageSrc && !uploadData && (
             <p>
-              <button>Upload Files</button>
+              <button style={{ cursor: 'pointer' }}>Upload Files</button>
             </p>
           )}
 
